@@ -1,0 +1,137 @@
+Create a POD using manifest file:
+
+$ vi mypod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+	name: my-nginx
+	labels: 
+		app: web
+spec:
+	containers:
+	-  name: nginx-container
+	   image: nginx:1.21
+	   ports:
+	     - containerPort: 80
+
+
+$ ls
+$ kubectl get pod
+$ kubectl apply -f mypod.yaml
+$ kubectl get pod
+$ kubectl describe pod my-nginx
+
+$ kubectl delete pod my-nginx
+$ kubectl get pod
+
+# no pods are available.
+No new pod was created.
+Pod doesn't have its own controller manager, so when a pod gets deleted, it wont come up by its own.
+So we dont directly launch the pod, we use another object which is replica set.
+
+
+
+Replica Set
+$ vi mReplicaset.yaml
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+	name: nginx-rs
+	labels: 
+	  app: nginx
+spec:
+	replicas: 3
+	selector:
+	  matchLabels:	
+		app: nginx
+	template:
+	   metadata:
+		labels:	
+		  app: nginx
+	   spec: 
+	   	containers:
+		 -  name: nginx-container
+	 	    image: nginx:latest
+		    ports:
+		      - containerPort: 80
+
+$ ls
+$ kubectl apply -f myreplicaset.yaml
+$ kubectl get pod
+$ kubectl get rs
+
+$ kubectl delete pod podname
+$ kubectl get pod
+
+Replica set has replica set controller manager
+when current state is not equal to desired state controller manager comes into picture.
+
+Replicaset has controller manager,RS it launches Pod.
+There will be downtime while updating the container when a image is available
+Doesnt have rolling update feature ( one additional pod is created with updated version and deletes one old pod and so on until all pods changes to newer version)
+ 
+Deployment has rolling update -> Replica set has controller manager -> Pod -> container -> application image
+
+$ kubectl describe nginx-rs
+
+$ kubectl delete rs nginx-rs
+
+
+Create a deployment
+
+$ vi nginx-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: nginx-deployment
+	labels: 
+	   app: nginx
+spec:
+	replicas: 3
+	selector:
+	   matchLabels:
+		app: nginx
+	template:
+	   metadata:
+		labels:
+		   app: nginx
+	   spec:
+		containers:
+		  - name: nginx-container
+		    image: nginx:1.21
+		    ports:
+		      -  containerPort: 80
+
+
+$ kubectl get pod
+$ kubectl get rs
+$ kubectl get deploy
+
+$ kubectl describe nginx-deployment
+
+$ kubectl describe deploy nginx-deployment | grep image
+$ kubectl get pod
+
+Change replicaset to 8 
+$ kubectl apply -f nginx-deployment.yaml
+change image at file 1.25
+$ kubectl apply --f nginx-deployment.yaml
+
+
+Take a duplicate session
+$ kubectl get pod --watch
+
+
+
+
+
+
+
+
+
+
+
+
+
