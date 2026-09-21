@@ -1,0 +1,312 @@
+Few more concepts:
+
+Namespace
+Roles&RolesBinding
+ClusterRole & ClusterRoleBindings
+Service account
+configmap and secret
+
+
+Namespace: In Kubernetes, namespaces provide a mechanism for isolating groups of resources within a single cluster.
+A Namespace in Kubernetes is a logical partition inside a cluster.
+
+$ kubectcl get namespaces
+$ kubectl create namespace app-a
+$ vi mypod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+	name: nginx-pod
+	namespace: app-a
+spec:
+	containers:
+	-  name: nginx-container
+	   image: nginx
+	   ports:
+	     - containerPort: 80
+
+$ kubectl apply of mypod.yaml
+$ kubectl get pod
+$ kubectl get pod -n app-a
+
+
+
+
+Service account:
+In K8s there are two types of identities: Humans (authenticated externally like IAM,OIDC,Certificate,..), application running inside pod
+Pod also needs an identity to run
+$ kubectl get sa
+
+A service account is a Kubernetes object that provides an identity to PODS.
+Since pods also sends API requests to api server to needs some identity to communicate
+Authentication to Kubernetes APT
+Authorization via RBAC
+Secure communication between pod and cluster
+Every namespace automatically gets a serviceaccount named default
+
+$ kubectl create serviceaccount app-sa -n app-a
+$ kubectl get sa -n app-a
+$ vi mypo.yaml 
+
+apiVersion: v1
+kind: Pod
+metadata:
+	name: test-pod
+	namespace: app-a
+spec:
+	serviceAccountName: app-sa
+	containers:
+	-  name: nginx
+	   image: nginx
+	   
+$ kubectl apply -f mypod.yaml
+$ kubectl get po -n app-a
+$ kubectl describe po test-pod -n app-a
+
+
+Roles & RoleBindings
+
+Lets say we have a pod which is running inside a custom namespace and a custom sa is attached to it 
+Roles are created for namespace and restrict it via some permissions which is rolebindings
+Role defines a set of permission inside a Namespace like which API group u have access, which resource, what are the actions allowed and we attach this role to a service account known as rolebinding
+
+
+ClusterRole & ClusterRole Binding
+
+
+
+
+
+
+Namespace
+$ kubectl get nodes
+$ kubectl get ns
+$ vi myns.yaml
+apiVersion: v1
+kind: Namespace
+metadata: 
+  name: mynamespace
+$ ls -lrt
+$ kubectl apply -f myns.yaml
+$ kubectl get ns
+$ kubectl describe ns mynamespace
+
+# $ kubectl delete ns mynamespace
+
+$ kubectl get sa -n mynamespace
+$ kubectl get sa -A
+
+
+$ vi namespace-test.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+
+$ vi namespace-prod.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+
+$ ls -lrt
+$ kubectl apply of namespace-test.yaml
+$ kubectl apply of namespace-prod.yaml
+$ kubectl get ns
+
+$ kubectl get sa -n prod
+$ kubectl get sa -n test
+
+$ vi serviceaccount-test.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-service-account
+  namespace: test
+
+$ vi serviceaccount-prod.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prod-service-account
+  namespace: prod
+$ kubectl apply -f serviceaccount-test.yaml
+$ kubectl apply -f serviceaccount-prod.yaml
+
+$ kubectl get sa -n test
+$ kubectl get sa -n prod
+
+
+$ vi role-test.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: test
+  name: test-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "create", "delete"]
+$ vi role-prod.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prod
+  name: prod-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "create", "delete"]
+
+$ kubectl apply -f role-test.yaml
+$ kubectl apply -f role-prod.yaml
+
+$ kubectl get roles -n test
+$ kubectl describe roles -n test
+
+
+$ vi rolebinding-test.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: 
+  name: test-rolebinding
+  namespace: test
+subjects: 
+- kind: ServiceAccount
+  name: test-service-account
+  namespace: test
+roleRef:
+  kind: Role
+  name: test-role
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+$ vi rolebinding-prod.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: 
+  name: prod-rolebinding
+  namespace: prod
+subjects: 
+- kind: ServiceAccount
+  name: prod-service-account
+  namespace: prod
+roleRef:
+  kind: Role
+  name: prod-role
+  apiGroup: rbac.authorization.k8s.io
+
+$ kubectl apply-f rolebinding-test.yaml
+$ kubectl apply-f rolebinding-prod.yaml
+
+$ kubectl get roles -n test
+$ kubectl describe roles test-role -n test
+$ kubectl describe rolebinding -n test
+
+$ vi deployment-test.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  namespace: test
+spec: 
+  replicas: 2
+  selector:
+    matchLabels:
+       app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec: 
+      serviceAccountName: test-service-account
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+
+
+$ vi deployment-prod.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prod-deployment
+  namespace: prod
+spec: 
+  replicas: 2
+  selector:
+    matchLabels:
+       app: prod-app
+  template:
+    metadata:
+      labels:
+        app: prod-app
+    spec: 
+      serviceAccountName: prod-service-account
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+
+
+$ kubectl apply -f deployment-test.yaml
+$ kubectl apply -f deployment-prod.yaml
+
+$ kubectl get pod -n test
+$ kubectl get pod -n prod
+$ kubectl get pod
+
+$ kubectl auth can-i create pods --as=system:serviceaccount:test:test-service-account -n test
+$ kubectl auth can-i create pods --as=system:serviceaccount:test:test-service-account -n prod
+
+
+
+Clusterrole: overall cluster-> all the namespaces
+
+$ vi clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "create", "delete"]
+
+$ kubectl apply -f clusterrole.yaml
+$ vi clusterolebinding.yaml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: test-service-account
+  namespace: test
+- kind: ServiceAccount
+  name: prod-service-account
+  namespace: prod
+roleRef:
+  kind: ClusterRole
+  name: cluster-role
+  apiGroup: rbac.authorization.k8s.io
+$ kubectl apply -f clusterrolebinding.yaml
+
+
+$ kubectl auth can-i create pods --as=system:serviceaccount:test:test-service-account -n test
+$ kubectl auth can-i create pods --as=system:serviceaccount:test:test-service-account -n prod
+
+$ kubectl api-resources
+$ kubectl api-resources | wc -l
+
+$ kubectl api-versions
+$ kubectl api-version|wc -l
+
+
