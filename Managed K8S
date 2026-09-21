@@ -1,0 +1,25 @@
+Managed K8S cluster
+IN K8S managed means control plane will be managed by cloud providers
+
+Pre-requisites:
+
+EC2
+IAM role
+kubectl
+eksctl
+
+
+Create an ec2 instance and assign the role to it.
+Install eksctl and kubectl
+
+create EKS cluster and nodes from ec2 management tool
+#eksctl create cluster --name cluster-name --region region-name --node-type instance-type --nodes-min number --nodes-max number --zones <az-1>,<az-3>
+
+#eksctl create cluster --name my-lab-cluster --region ap-south-1 --node-type t2.medium
+
+eksctl create cluster --name my-lab-cluster --region ap-south-1 node-type t2.small --nodes 1 --node-volume-type standard --node-volume-size 20 --spot
+
+#eksctl delete cluster my-lab-cluster --region ap-south-1
+
+
+$ kubectl get nodes
