@@ -1,0 +1,152 @@
+Kubernetes Architecture Overview
+
+It has two components:
+	Control plane
+	Data Plane
+Control plane consists:
+	Kube API Server
+	etcd
+	scheduler
+	controller manager
+Data plane consists
+	Kubelet
+	Kubeproxy
+	runc
+
+	
+
+What is Control Plane?
+The control plane is the brain of the Kubernetes cluster
+Making decisions about the cluster
+Maintaining desired state
+Scheduling workloads
+Managing cluster wide configuration
+Responding to failures
+Control plane = Decision maker
+
+What is Data Plane?
+The Data Plane consists of worker nodes
+Running application containers
+Executing instructions given by the control plane
+Reporting node and pod status
+Data Plane = Execution engine
+
+Control Plane components:
+
+Kube-apiserver:
+	ApiGateway -> authenticate and authorize
+( Linux : Everything is FILE, K8S: Everything is API)
+	Entry point of the cluster
+	Accepts REST API requests
+	Validates requests
+	Stores cluster state in etcd
+	Servers as communication hub
+	Everything in Kubernetes talks to the API Server
+
+etcd:
+	Distributed Key-value store
+	Stores entired cluster state
+	POD/Deployment/Services info
+	etcd is the single source of truth
+	If etcd is lost without backup, cluster state is lost
+
+Kube-Scheduler:
+	Assign pods to nodes
+	Makes placement decisions
+
+Controller Manager
+	Multiple types of controller manager
+	Controller manager watches the cluster current state and tries to match with desired state
+
+
+Data Plane Components:
+Kubelet
+	Agent running on each node
+	Talks to API Server
+	Receives pod specifications from KubeAPI Server
+	
+Container RUntime - ContainerD -> Who actually launches the container
+Kubeproxy 
+	Handles network routing
+	Manages iptables or IPVS rules
+	Implements Services
+
+
+
+Installation of K8S
+multiple ways (30-35) to install
+
+Minikube:
+	Simple and easy to use
+	Single Node K8S: on the same machine both control and data plane runs
+
+Kubeadm:
+	Managing control plane is little tough
+Manges K8S
+	Cloud providers manages the control plane
+
+
+
+What is POD?
+Container runs only one business logic
+In a Microservice architecture we have multiple business logics
+POD is the smallest deployment unit: atom of k8s that contains one or more containers
+
+
+Install minikube
+Ubuntu:
+	Docker must be install
+	install minikube
+	install kubectl
+$ sudo apt-get update
+$ sudo apt install docker.io
+$ sudo usermod -aG docker $USER && newgrp docker
+$ docker --version
+
+
+Install minikube from minikube documentation
+$ ls
+$ sudo mv minikube-linux-amd64 /usr/local/bin/minikube
+$ sudo chmod +x /usr/local/bin/minikube
+$ minikube version
+
+Install Kubectl from k8s documentation
+$ ls
+$ chmod +x kubectl
+$ sudo mv kubectl /usr/local/bin/
+$ kubectl
+
+$ minikube start --driver=docker
+
+
+$ kubectl get nodes
+$ kubectl get pods
+$ kubectl get ns
+$ kubectl get pof -n kube-system
+
+
+
+K8S is an orchestration tool
+The main purpose is not to just run the container/pod
+The main function is to maintain the desired state of application
+watch-> act-> reconcile
+
+Application -> Container -> Pod -> Inside the K8S cluster
+
+What is Desired state/Requirements:
+	How many pods should run
+	Which container image to use
+	What port to expose
+	How many replicas should exist
+	.......
+
+How to pass my desire state to K8S
+	Imperative way : Step by step what to do directly at console using kubectl
+			 No documentation, No VCS
+	Declarative way : We write an yaml file which is called manifest
+			kubectl apply -f <>
+			Creates objects and k8s keep monitoring the objects
+
+
+
+
