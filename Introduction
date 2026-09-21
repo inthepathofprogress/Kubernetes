@@ -1,0 +1,55 @@
+Ex: Ordering a Pizza
+
+Login -> Menu -> Payment -> Delivery 
+
+Writing every logic in a single program -> Monolithic way of deploying - one single program  written in one single language.
+
+A single program, where all components of a s/w: UI, business logic, data access are build, deploy and scale together as one executable unit.
+
+Advantage:
+Simple to manage, monitor and log
+Disadvantage :
+Huge code, slow in deployment, hard to scale.
+
+
+Microservice architecture
+Breaks a large monolithic application into a collection of small, independent services.
+Each service focuses on a single business capability
+
+If we use independent server for each service then we are wasting the resources
+If we keep all services in one server then again single point of failure and goes to same issues
+We can use multiple ec2 for each service and add a load balancers for each service
+If we are using load balancers then there will be hundereds of load balancers
+
+So we can use multiple docker containers for each service
+
+Since we have many services and each service runs on many containers then its difficult to manage
+So we use container orchestration tool to manage the containers.
+One of such tool is Kubernetes(K8S)
+
+
+
+Microservice and containers are made for each other -> they solve complementary problems.
+
+Request of microservice:
+	Isolation between the services
+	Light weight deployment
+	Consistency 
+	Independent scaling
+Containers offers:
+	OS level process isolation using namespace and cgroups
+	Containers are also they are in MBs not in GBs
+	Docker images are immutable
+	each container can scale, start, restart, stop independently.
+
+What is container orchestration tool?
+Platform that automates:
+	Deployment, management, scale, networking, lifecycle of container. 
+
+"Brain" that coordinates hundreds of containers - deciding where they should run, how they communicate, and what to do if something breaks.
+
+Popular container orchestration tools:
+K8s -> Mks(EKS, AKS, GKE, OKE, IKE), docker swarm, open shift, Nomad
+
+
+CNCF is an organization currently handling k8s.
