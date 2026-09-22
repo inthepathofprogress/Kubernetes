@@ -310,3 +310,20 @@ $ kubectl api-versions
 $ kubectl api-version|wc -l
 
 
+ConfigMaps
+Secret
+Daemonset
+stateful sets
+
+
+SatefulSets:
+How database works:
+When we create a first database server that becomes master database, where we can perform read and write operations
+Most of the time read operations done at slave side so master will be good to write operations
+Deployment kind is not suitable for stateful application because all objects create at the same time.
+
+
+Stateful set is good for applications like database,...
+
+
+
