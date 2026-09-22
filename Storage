@@ -1,0 +1,214 @@
+Storage
+
+$ kubectl get pods
+$ vi nginx-test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-test
+spec: 
+  containers:
+  - name: nginx
+    image: nginx
+$ kubectl apply -f nginx-test.yaml
+
+$ kubectl get pod
+$ kubectl exec -it nginx-test -- bash
+
+/# echo "Hello Devops" > /usr/share/nginx/html/indec.html
+/# ls /usr/share/nginx/html/indec.html
+/# cat /usr/share/nginx/html/indec.html
+/# curl localhost
+/# exit
+
+$ kubectl get pod
+$ kubectl delete pod nginx-test
+
+$ kubectl apply -f nginx-test.yaml
+$ kubectl exec -it nginx-test -- bash
+/# cat /usr/share/nginx/html/indec.html
+/# exit
+
+Hello devops the data which we stored is gone
+
+Containers are ephemeral
+When pod dies, data is gone
+This is a major problem for stateful application
+MySQL -> database file
+mongodb -> documents
+reddis -> cache
+wordpress -> uploads
+....
+
+
+K8S provides two types of solutions:
+	Volumes : Storage that we attach to the pod
+		  emptyDir{} -> its a temporary volume
+	Persistent storage
+$ vi nginx-emptydir.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: nginx-emptydir
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-emptydir
+  template:
+    metadata:
+      labels:
+        app: nginx-emptydir
+    spec: 
+      containers:
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: cache-volume
+          mountPath: /data
+        volumes:
+        - name: cache-volume
+          emptydir: {}
+
+$ kubectl apply -f nginx-emptydir-yaml
+
+$ kubectl get pods
+$ kubectl exec -it nginx-emptydir-..... -- bash
+/# df -h
+/# cd /data
+/# ls
+/# echo "Hello Kubernetes storage lab" > file1.txt
+/# ls
+/# cat file1.txt
+/# exit
+
+$ kubectl delete pod podname
+$ kubectl get pods
+$ kubectl exec -it nginx-emptydir-..... -- bash
+/# cd /data
+/# ls
+
+data is not available
+Storage is tied up to the POD lifecycle.
+pod dies then storage deleted
+
+
+Persistent storage in Kubernetes
+
+Persistent volume (pv) -> Persistem volume claim(PVC) -> Storage class(SC)
+storage disk like aws ebs volume -> request for storage -> storage type
+
+Pod -> PVC -> PV (manually)
+Pod -> PVC -> Storage type -> PV ( automatic)
+
+
+CSI (container storage interface) Driver:
+Kubernetes doesn't talk to directly to cloud storage 
+It uses CSI drivers
+
+Pod -> PVC -> Storageclass -> AWS EBS CSI driver -> create and mount EBS volume 
+
+$ kubectl get storageclass 
+( by default when use eks gp2 is available)
+$ vi pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: demo-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: gp2
+
+$ kubectl describe sc gp2
+$ kubectl apply -f pvc.yaml
+$ kubectl get pvc
+
+
+$ aws ec2 describe-volumes
+
+
+$ vi pod-pvc.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: storage-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - mountPath: "/data"
+      name: storage
+  volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: demo-pvc
+
+$ kubectl apply -f pod-pvc.yaml
+$ kubectl get sc
+$  kubectl get pvc
+$ kubectl get pv
+$ kubectl get pod
+$ kubectl describe nameofpod
+# its in pending may be csi driver issue
+$ kubectl get pvc
+$ kubectl describe pvc pvcname
+
+$ kubectl get nodes
+
+$ kubectl describe pod podname
+$ kubectl get pods -n kube-system | grep ebs
+$ kubectl describe storageclass gp2
+$ kubectl delete pod podname
+
+
+$ aws eks list-clusters
+$ aws eks create-addon --cluster-name <clustername> --addon-name aws-ebs-csi-driver
+$ kubectl get pods -n kube-system | grep ebs
+# csi driver pods are running
+# create storage class
+copy from aws
+$ kubectl apply -f gp3.sc.yaml
+$ kubectl get sc
+
+$ kubectl apply -f pvc.yaml
+$ kubectl get pvc -w
+
+$ kubectl apply -f pod=pvc.yml
+$ kubectl get pod
+$ kubectl get pvc
+$ kubectl get pv
+
+
+$ kubectl exec -it storage-pod --bash
+/# df -h
+/# cd /data
+/# echo " we are learning EBS on EKS " > file.txt
+/# ls
+/# cat file.txt
+/# exit
+
+
+$ kubectl get po
+$ kubectl delete pod podname
+
+$ kubectl apply -f pod-pvc.yaml
+
+$ kubectl exec -it storage-pod --bash
+/# cd /data
+/# ls
+/# cat file.txt
+
+
+
+
+
+
+
+
+
+
